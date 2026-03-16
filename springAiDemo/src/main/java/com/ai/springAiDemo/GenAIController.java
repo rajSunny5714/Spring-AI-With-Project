@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 @RestController
 public class GenAIController {
@@ -38,11 +41,21 @@ public class GenAIController {
         return chatService.askAI(prompt);
     }
 
-    @GetMapping("/generate-image")
-    public ResponseEntity<byte[]> generateImages(@RequestParam String prompt) {
-        byte[] image = imageService.generateImage(prompt);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.IMAGE_PNG);
-        return new ResponseEntity<>(image, headers, HttpStatus.OK);
+//    @GetMapping("/generate-image")
+//    public ResponseEntity<byte[]> generateImages(@RequestParam String prompt) {
+//        byte[] image = imageService.generateImage(prompt);
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.IMAGE_PNG);
+//        return new ResponseEntity<>(image, headers, HttpStatus.OK);
+//    }
+
+    @GetMapping("/generate-images")
+    public List<String> generateImages(@RequestParam String prompt) {
+        List<byte[]> images = imageService.generateImages(prompt, 256, 256);
+        List<String> base16Images = new ArrayList<>();
+        for (byte[] img : images) {
+            base16Images.add(Base64.getEncoder().encodeToString(img));
+        }
+        return base16Images;
     }
 }
