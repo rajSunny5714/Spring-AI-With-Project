@@ -5,10 +5,10 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 @Service
 public class ImageService {
@@ -44,7 +44,9 @@ public class ImageService {
 //        return response.getBody();
 //    }
 
-    public List<byte[]> generateImages(String prompt, int width, int height) {
+    private final List<byte[]> imageStore = new ArrayList<>();
+
+    public List<String> generateImages(String prompt, int width, int height, int n, String quality) {
 
         RestTemplate restTemplate = new RestTemplate();
 
@@ -53,16 +55,29 @@ public class ImageService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.IMAGE_PNG));
 
-        List<byte[]> images = new ArrayList<>();
+        imageStore.clear();
 
-        for (int i = 0; i < 4; i++) {
+        List<String> urls = new ArrayList<>();
+
+        if (n > 5) n = 5;
+
+        for (int i = 0; i < n; i++) {
 
             Map<String, Object> body = new HashMap<>();
             body.put("inputs", prompt);
 
             Map<String, Object> params = new HashMap<>();
-            params.put("width", width);
-            params.put("height", height);
+
+            if ("low".equalsIgnoreCase(quality)) {
+                params.put("width", 256);
+                params.put("height", 256);
+            } else if ("medium".equalsIgnoreCase(quality)) {
+                params.put("width", 512);
+                params.put("height", 512);
+            } else {
+                params.put("width", width);
+                params.put("height", height);
+            }
 
             body.put("parameters", params);
 
@@ -77,9 +92,14 @@ public class ImageService {
                             byte[].class
                     );
 
-            images.add(response.getBody());
+            imageStore.add(response.getBody());
+            urls.add("http://localhost:8080/image/" + i);
         }
 
-        return images;
+        return urls;
+    }
+
+    public byte[] getImage(int index) {
+        return imageStore.get(index);
     }
 }

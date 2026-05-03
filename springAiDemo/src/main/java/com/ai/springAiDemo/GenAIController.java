@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -50,12 +51,25 @@ public class GenAIController {
 //    }
 
     @GetMapping("/generate-images")
-    public List<String> generateImages(@RequestParam String prompt) {
-        List<byte[]> images = imageService.generateImages(prompt, 256, 256);
-        List<String> base16Images = new ArrayList<>();
-        for (byte[] img : images) {
-            base16Images.add(Base64.getEncoder().encodeToString(img));
-        }
-        return base16Images;
+    public List<String> generateImages(
+            @RequestParam String prompt,
+            @RequestParam(defaultValue = "1024") int width,
+            @RequestParam(defaultValue = "1024") int height,
+            @RequestParam(defaultValue = "1") int n,
+            @RequestParam(defaultValue = "hd") String quality
+    ) throws Exception {
+        return imageService.generateImages(prompt, width, height, n, quality);
     }
+
+    @GetMapping("/image/{index}")
+    public ResponseEntity<byte[]> getImage(@PathVariable int index) {
+
+        byte[] image = imageService.getImage(index);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+
+        return new ResponseEntity<>(image, headers, HttpStatus.OK);
+    }
+
 }
